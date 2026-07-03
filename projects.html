@@ -179,8 +179,12 @@
         .two-col {
           flex-direction: column;
           gap: clamp(1rem, 3vw, 2rem);
+          align-items: stretch;
         }
-        .two-col > .col--image { flex: 1; width: 100%; }
+        .two-col > .col--image {
+          flex: 1 1 auto !important;
+          width: 100% !important;
+        }
       }
 
       /* ===========================================
@@ -442,11 +446,77 @@
         .nav-dots { display: none; }
       }
 
-      @media (max-width: 768px) {
+      /* Tablet + phone: let slides grow past the viewport so nothing is clipped. */
+      @media (max-width: 900px) {
+        html { scroll-snap-type: y proximity; }
+        .slide {
+          height: auto;
+          min-height: 100dvh;
+          overflow: visible;
+        }
         .slide-content {
+          justify-content: flex-start;
+          max-height: none;
+          overflow: visible;
+          padding-top: clamp(2.75rem, 8vw, 4rem);
+          padding-bottom: clamp(2rem, 6vw, 3.5rem);
           padding-left: var(--slide-padding);
           padding-right: var(--slide-padding);
         }
+        .project-image {
+          max-height: min(48vh, 400px);
+          width: auto;
+        }
+        .paper-card { max-width: 100%; }
+      }
+
+      /* Phone: tighten chrome and typography further. */
+      @media (max-width: 640px) {
+        :root {
+          --slide-padding: clamp(1.1rem, 5vw, 1.75rem);
+          --body-size: 0.9rem;
+          --small-size: 0.72rem;
+          --label-size: 0.68rem;
+        }
+        .nav-dots { display: none; }
+        .slide-counter {
+          bottom: 0.75rem;
+          right: 1rem;
+          font-size: 0.65rem;
+          letter-spacing: 0.12em;
+        }
+        h2 {
+          font-size: clamp(1.4rem, 6.5vw, 2rem);
+          line-height: 1.15;
+          letter-spacing: -0.5px;
+        }
+        .label {
+          letter-spacing: 0.15em;
+          gap: 0.5rem;
+        }
+        .label::before { width: 20px; }
+        .meta { letter-spacing: 0.06em; }
+        .points {
+          gap: 0.55rem;
+          margin-top: 0.6rem;
+        }
+        .points li {
+          line-height: 1.5;
+          padding-left: 1rem;
+        }
+        .points li::before {
+          width: 10px;
+          top: 0.52rem;
+        }
+        .tags {
+          gap: 0.35rem;
+          margin-top: 0.85rem;
+        }
+        .tag {
+          padding: 0.3rem 0.7rem;
+          letter-spacing: 0.08em;
+        }
+        .project-image { max-height: min(42vh, 340px); }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -751,11 +821,15 @@
         }
 
         setupTouchNav() {
+          // On narrow screens slides can exceed the viewport height and rely on
+          // native scrolling; a swipe handler would hijack normal reading.
+          const narrow = window.matchMedia("(max-width: 900px)");
           let startY = 0;
           document.addEventListener("touchstart", (e) => {
             startY = e.touches[0].clientY;
           }, { passive: true });
           document.addEventListener("touchend", (e) => {
+            if (narrow.matches) return;
             const diff = startY - e.changedTouches[0].clientY;
             if (Math.abs(diff) > 50) {
               this.goToSlide(diff > 0 ? this.currentSlide + 1 : this.currentSlide - 1);
